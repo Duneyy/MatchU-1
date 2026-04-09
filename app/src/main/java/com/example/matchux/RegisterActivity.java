@@ -1,0 +1,99 @@
+package com.example.matchux;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.util.Log;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class RegisterActivity extends AppCompatActivity {
+
+    private FirebaseAuth auth; // Firebase 인증
+    private FirebaseFirestore firestore;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_register);
+
+        auth = FirebaseAuth.getInstance();
+        firestore = FirebaseFirestore.getInstance();
+
+        Button registerButton = findViewById(R.id.buttonRegister);
+
+        registerButton.setOnClickListener(v -> registerUser());
+    }
+
+    private void registerUser() {
+        String username = ((EditText) findViewById(R.id.editTextUsername)).getText().toString();
+        String email = ((EditText) findViewById(R.id.editTextEmail)).getText().toString();
+        String password = ((EditText) findViewById(R.id.editTextPassword)).getText().toString();
+
+        auth.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        // Firebase 사용자 가져오기 (필요 시 사용)
+                        // FirebaseUser user = auth.getCurrentUser();
+
+                        // Firestore에 사용자 정보 저장
+                        saveUserData(username, email);
+
+                        Toast.makeText(this, "회원가입 성공", Toast.LENGTH_SHORT).show();
+
+                        navigateToMainActivity();
+                    } else {
+                        Toast.makeText(this,
+                                "회원가입 실패: " + (task.getException() != null ? task.getException().getMessage() : ""),
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    private void saveUserData(String username, String email) {
+
+        // 1. 현재 로그인된 Firebase 유저의 고유 ID 가져오기
+        //    createUserWithEmailAndPassword 성공 직후라 getCurrentUser()가 null이 아님
+        String uid = auth.getCurrentUser().getUid();
+        // uid 예시: "abc123xyz789..."
+
+        // 2. Firestore에 저장할 데이터 구성
+        Map<String, Object> user = new HashMap<>();
+        user.put("username", username);
+        user.put("email", email);
+        user.put("uid", uid);  // UID도 함께 저장 (나중에 조회할 때 필요)
+
+        firestore.collection("users")
+                .document(uid)   // 3. 문서 ID를 UID로 지정 (.add()는 랜덤 ID)
+                .set(user)       // 4. 데이터 저장 요청 (여기서 네트워크 통신 시작)
+
+                // 5. 저장 완료됐을 때 실행되는 콜백 (기다리는 부분)
+                .addOnSuccessListener(aVoid -> {
+                    // ✅ Firestore 저장이 완전히 끝난 후 여기가 실행됨
+                    Toast.makeText(this, "회원가입 성공", Toast.LENGTH_SHORT).show();
+                    navigateToMainActivity();
+                })
+
+                // 6. 저장 실패했을 때 실행되는 콜백
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "데이터 저장 실패: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+
+        // 7. .set() 이후 코드는 저장 완료를 기다리지 않고 바로 실행됨
+        //    그래서 Toast, navigateToMainActivity()를 여기 두면 안됨!
+    }
+
+    private void navigateToMainActivity() {
+        Intent intent = new Intent(this, MainActivity.class);
+        startActivity(intent);
+        finish();
+    }
+}
