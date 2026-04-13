@@ -21,6 +21,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Firebase Auth 초기화
         auth = FirebaseAuth.getInstance();
 
         Button loginButton = findViewById(R.id.button);
@@ -40,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
         String email = emailEditText.getText().toString().trim();
         String password = passwordEditText.getText().toString().trim();
 
-        // 1. 입력값 검사 (비어있으면 Firebase 함수 호출 시 앱이 종료됨)
+        // 1. 입력값 검사
         if (TextUtils.isEmpty(email)) {
             Toast.makeText(this, "이메일을 입력해주세요.", Toast.LENGTH_SHORT).show();
             return;

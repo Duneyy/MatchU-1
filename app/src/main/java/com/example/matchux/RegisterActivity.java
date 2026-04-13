@@ -1,10 +1,12 @@
 package com.example.matchux;
 
 import android.content.Intent;
+import android.media.Image;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -31,6 +33,13 @@ public class RegisterActivity extends AppCompatActivity {
         Button registerButton = findViewById(R.id.buttonRegister);
 
         registerButton.setOnClickListener(v -> registerUser());
+
+        ImageButton imageButton = findViewById(R.id.imageButton);
+        imageButton.setOnClickListener(v -> backToMain());
+    }
+    public void backToMain(){
+        navigateToMainActivity();
+
     }
 
     private void registerUser() {
